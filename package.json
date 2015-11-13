@@ -4,7 +4,7 @@
   "description": "ESLint rules for AngularJS projects",
   "main": "index.js",
   "scripts": {
-      "test": "gulp"
+    "test": "gulp"
   },
   "repository": {
     "type": "git",
