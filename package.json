@@ -35,5 +35,8 @@
     "eslintplugin",
     "angular",
     "angularjs"
-  ]
+  ],
+  "dependencies": {
+    "lodash": "^3.10.1"
+  }
 }

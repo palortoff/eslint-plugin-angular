@@ -22,7 +22,8 @@ eslintTester.run('one-dependency-per-line', rule, {
         'app.controller("", ["$http", function($http) {}]);',
         'app.controller("", ["$http", func]); function func($http){}',
         'app.controller("", ["$http",\n "$q", function($http, \n$q) {}]);',
-        'app.controller("", ["$http",\n "$q", func]); function func($http,\n$q){}'
+        'app.controller("", ["$http",\n "$q", func]); function func($http,\n$q){}',
+        'var func = function($http){}; app.controller("", func);'
     ],
     invalid: [{
         code: '(function() {\n  "use strict";\napp.controller("", function($q, $http) {});\n})();',
@@ -50,6 +51,10 @@ eslintTester.run('one-dependency-per-line', rule, {
     },
     {
         code: 'app.controller("", ["$http",\n "$q", func]); function func($http,$q){}',
+        errors: [{message: 'Do not use multiple dependencies in one line'}]
+    },
+    {
+        code: 'var func = function($http, $q){}; app.controller("", func);',
         errors: [{message: 'Do not use multiple dependencies in one line'}]
     }]
 });

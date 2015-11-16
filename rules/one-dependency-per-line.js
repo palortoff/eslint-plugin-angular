@@ -1,6 +1,14 @@
+/**
+ * require all DI parameters to be located in their own line
+ *
+ * Injected dependencies should be written one per line.
+ *
+ * @version 0.14.0
+ */
 'use strict';
 
 var utils = require('./utils/utils');
+var _ = require('lodash');
 
 module.exports = function(context) {
     var angularObjectList = ['animation', 'config', 'constant', 'controller', 'directive', 'factory', 'filter', 'provider', 'service', 'value', 'decorator'];
@@ -43,12 +51,42 @@ module.exports = function(context) {
         });
     }
 
+    function findFunctionDeclarationByDeclaration(body, fName) {
+        return _.find(body, function(item) {
+            return item.type === 'FunctionDeclaration' && item.id.name === fName;
+        });
+    }
+
+    function findFunctionDeclarationByVariableDeclaration(body, fName) {
+        var fn;
+        _.forEach(body, function(item) {
+            if (fn) {
+                return;
+            }
+            if (item.type === 'VariableDeclaration') {
+                _.forEach(item.declarations, function(declaration) {
+                    if (declaration.type === 'VariableDeclarator' &&
+                        declaration.id &&
+                        declaration.id.name === fName &&
+                        declaration.init &&
+                        declaration.init.type === 'FunctionExpression'
+                    ) {
+                        fn = declaration.init;
+                    }
+                });
+            }
+        });
+        return fn;
+    }
+
     function getFunctionDeclaration(node, fName) {
         if (node.type === 'BlockStatement' || node.type === 'Program') {
             if (node.body) {
-                var fn = node.body.find(function(item) {
-                    return item.type === 'FunctionDeclaration' && item.id.name === fName;
-                });
+                var fn = findFunctionDeclarationByDeclaration(node.body, fName);
+                if (fn) {
+                    return fn;
+                }
+                fn = findFunctionDeclarationByVariableDeclaration(node.body, fName);
                 if (fn) {
                     return fn;
                 }
@@ -76,7 +114,9 @@ module.exports = function(context) {
                 angularObjectList.indexOf(node.callee.property.name) >= 0) {
                 var fName = node.arguments[1].name;
                 fn = getFunctionDeclaration(node, fName);
-                return checkArgumentPositionInFunction(fn);
+                if (fn) {
+                    return checkArgumentPositionInFunction(fn);
+                }
             }
             if (utils.isAngularComponent(node) &&
                 node.callee.type === 'MemberExpression' &&
